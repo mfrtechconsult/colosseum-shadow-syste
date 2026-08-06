@@ -36,9 +36,9 @@ local steps, heart = 0, 5000
 for _ = 1, 255 do steps = steps + 1 end
 eq(heart, 5000, "no reduction before step 256")
 steps = steps + 1
-if steps >= 256 then steps, heart = steps - 256, heart - 250 end
+if steps >= 256 then steps, heart = steps - 256, heart - 150 end
 eq(steps, 0, "step counter rolls over")
-eq(heart, 4750, "step reduction")
+eq(heart, 4850, "Hardy party-step reduction")
 
 local function recoil(maxHP, offset)
   return math.max(1, math.floor(maxHP / 16) + offset)

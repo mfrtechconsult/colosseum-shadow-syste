@@ -11,7 +11,9 @@ return function(mod)
     local moveId = ctx and ctx.moveId
     if moveId == SHADOW_MOVE and state and state.hyperMode then
       local rng = ctx.rng or math.random
-      if rng(0, 255) < 230 then return true end
+      -- 232/256 is Colosseum's exact 90.625% Hyper Mode critical rate.
+      -- Bypass Gen 1's Speed-based critical formula for this move.
+      return rng(0, 255) < 232
     end
     return next(ctx)
   end)
@@ -61,15 +63,23 @@ return function(mod)
     end
   end)
 
+  local function countParticipation(battle, battler)
+    if not battle then return end
+    local marker = require("src.battle.BattleState")
+      ._colosseumMarkParticipationV13
+    local result = marker and marker(battle, battler)
+    if result and result.threshold then
+      battle:sayNext("The door to its heart\nopened a little!")
+    end
+  end
+
   mod.events:on("battle.started", function(ev)
     local battle = ev.battle
-    local mon = battle and battle.player and battle.player.mon
-    if isActiveShadow(mon) then
-      local result = reduceHeart(mon, battle.data, 500, "BATTLE_ENTRY")
-      if result and result.threshold then
-        battle:sayNext("The door to its heart\nopened a little!")
-      end
-    end
+    countParticipation(battle, battle and battle.player)
+  end)
+
+  mod.events:on("battle.battler_switched", function(ev)
+    countParticipation(ev.battle, ev.battler)
   end)
 
   mod.events:on("battle.turn_started", function(ev)
@@ -79,8 +89,12 @@ return function(mod)
     if state and state.isShadow and state.hyperMode
        and battle.rng(0, 255) == 0 then
       state.hyperMode = false
+      local result = reduceHeart(mon, battle.data, nil, "NATURAL_RECOVERY")
       battle:sayNext(monName(battle.game, mon)
         .. " came to its senses!")
+      if result and result.threshold then
+        battle:sayNext("The door to its heart\nopened a little!")
+      end
     end
   end)
 

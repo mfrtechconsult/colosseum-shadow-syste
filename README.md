@@ -1,70 +1,73 @@
-# Colosseum Shadow System v1.2.0
+# Colosseum Shadow System v1.3.0
 
-A directly playable Shadow Pokémon vertical slice for Gen1Recomp.
+A directly playable Pokémon Colosseum-style Shadow Pokémon vertical slice for
+Gen1Recomp. All player-facing mod text is written in English.
 
-The mod is entirely in English in-game and places four test NPCs outside in
-Pallet Town. It does not replace any original Pallet Town NPC.
+Four runtime NPCs are placed on free walkable cells in Pallet Town. Vanilla
+NPCs and map objects are not replaced.
 
 ## Pallet Town test NPCs
 
-- **Researcher** — gives the Snag Machine, restores at least 25 Poké Balls,
-  heals the party, and supplies a level 15 Eevee when the player has no
-  Pokémon. After the demo, the Researcher can reset it.
+- **Researcher** — gives the Snag Machine, restores Poké Balls, heals the
+  party, supplies a level 15 Eevee when needed, and resets the demo.
 - **Cipher Peon** — starts a Trainer battle against a Shadow Pikachu.
-- **Shadow Monitor operator** — optional debug display for encounter state.
-  Normal progression tracking is available directly from the Pokémon summary
-  screen in the party or PC.
-- **Relic Keeper** — applies Vivid Scent for fast testing and performs
-  purification once the Heart Gauge reaches zero.
+- **Shadow Monitor operator** — optional debug/status display.
+- **Relic Keeper** — applies Vivid Scent and performs purification when the
+  Heart Gauge reaches zero.
 
-NPC positions are chosen dynamically from free, walkable Pallet Town cells.
-This prevents the mod from overwriting vanilla NPCs or blindly overlapping
-another mod's runtime objects.
+## Test cycle
 
-## Implemented test cycle
+1. Obtain the Snag Machine from the Researcher.
+2. Fight the Cipher Peon and Snag the Shadow Pikachu with a normal Poké Ball.
+3. Inspect the Pokémon's third **SHADOW DATA** summary page.
+4. Open its heart through battle participation, walking, Call, Day Care, or
+   Vivid Scent.
+5. Trigger Hyper Mode with Shadow Rush and end it with Call, Scent, fainting,
+   Day Care, or the rare natural recovery roll.
+6. Bank EXP after the correct Heart Gauge threshold.
+7. Empty the gauge and purify the Pokémon at the Relic Keeper.
+8. Apply stored EXP, replace Shadow Rush, unlock naming, and award the
+   National Ribbon marker.
+9. After purification, the Pokémon immediately returns to the ordinary
+   two-page summary with no Shadow badge or SHADOW DATA page.
 
-1. Obtain the Snag Machine and Poké Balls.
-2. Fight a Cipher Peon.
-3. Throw a normal Ball at the Trainer's Shadow Pikachu.
-4. The Snag Machine converts the Ball and uses the normal Ball catch formula.
-5. On success, the exact enemy instance joins the party or PC.
-6. Open its heart through walking, battle entry, Call, or Vivid Scent.
-7. Trigger and clear Hyper Mode.
-8. Store EXP after the Nature threshold.
-9. Purify at the Relic Keeper.
-10. Replace Shadow Rush, apply stored EXP, unlock naming, and award the
-    National Ribbon marker.
+## Colosseum fidelity in v1.3.0
 
-## Mechanics included
+- Exact 25-Nature values for battle participation, Call, party walking,
+  Day Care walking, and Scents.
+- Individual 256-step Heart counters for party and Day Care Pokémon.
+- A Pokémon receives the battle-participation reduction once per battle,
+  including when first sent out after a switch.
+- Correct Heart thresholds for normal-move recovery, Nature reveal, EXP
+  banking, and purification readiness.
+- Locked moves remain visible as `????` with `??/??` PP.
+- Shadow Rush stays available until purification, consumes no PP, renders
+  `--/--`, has 90 power, and uses max-HP recoil with the Colosseum variation.
+- Nature- and Heart-stage-specific Hyper Mode entry rates.
+- Hyper Shadow Rush uses a 232/256 critical rate (90.625%).
+- Hyper Mode may cause disobedience on non-Shadow Rush moves and blocks bag
+  items used on that Pokémon, while Scents remain valid.
+- Call replaces Run in Trainer battles and whenever it is needed by the active
+  Pokémon in a wild battle. Call wakes sleep or ends Hyper Mode and otherwise
+  wastes the turn.
+- Hyper Mode ends on fainting, Call, Scent, Day Care, or rare natural recovery.
+- Shadow Pokémon cannot use Rare Candy, evolution stones, TMs/HMs, evolve,
+  reorder moves, receive a nickname, or be selected for link trade.
+- Shadow Pokémon receive no normal battle EXP before the correct threshold;
+  eligible EXP is stored and applied during purification.
+- Day Care opens the Heart Gauge but grants no Day Care EXP to a Shadow
+  Pokémon.
+- Purification retains the National Ribbon/history data while removing all
+  Shadow-specific summary behavior.
 
-- Animated dark-aura reveal and a SHADOW badge shown only while the actual
-  Shadow battler sprite is visible.
-- A third SHADOW DATA page in the normal Pokémon summary screen while the
-  Pokémon is still Shadow, including Heart Gauge, Nature visibility, Hyper
-  Mode, unlocked moves, walking progress, and stored EXP.
-- Purification removes every Shadow summary marker and restores the standard
-  two-page Pokémon summary, matching Pokémon Colosseum's lifecycle.
-- Shadow type with neutral effectiveness.
-- Shadow Rush: 90 power, 100 accuracy, no consumed PP, recoil based on
-  maximum HP, and an additional Hyper Mode critical roll.
-- Five-section Heart Gauge.
-- Move unlocking at the Colosseum thresholds.
-- Hidden Nature until the appropriate threshold.
-- Per-Pokémon 256-step opening counter on every map.
-- Hyper Mode entry, disobedience, natural recovery, Call, and persistence.
-- Trainer-Pokémon capture through the Snag Machine.
-- No nickname before purification.
-- No evolution before purification.
-- Delayed EXP banking and application.
-- Purification and National Ribbon state.
-- Party and PC persistence through ordinary Gen1Recomp saves.
-- Rematch after a knockout and full demo reset.
+## Deliberate host-game adaptations
 
-## Accuracy note
+Gen1Recomp is a Generation I single-battle engine, while Pokémon Colosseum is
+a Generation III double-battle game. The unavoidable adaptations are recorded
+in `COLOSSEUM_FIDELITY.md`. Most visibly, Shadow information uses a third
+summary page instead of replacing the EXP area, and trainer/partner-targeting
+Hyper disobedience outcomes are represented as lost-turn messages.
 
-The overall state machine and gameplay flow follow Pokémon Colosseum. The
-exact per-Nature Heart Gauge coefficients and all hidden Hyper Mode outcome
-weights are not publicly documented with enough certainty to claim
-bit-perfect parity. They are isolated in `main.lua` so verified constants can
-replace them without redesigning the system. No unverified value is labelled
-as exact.
+The demo target is Pikachu, which was not a Shadow Pokémon in the original
+Colosseum roster. Its full Heart Gauge value of 5000 is therefore a test value;
+the Nature/action reductions and thresholds themselves follow Colosseum.

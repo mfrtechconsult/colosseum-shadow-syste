@@ -161,6 +161,28 @@ function installShadowUIRuntime(mod)
 
     if self.page ~= 3 then
       vanillaDraw(self)
+
+      -- Colosseum keeps all four move slots visible. Locked normal moves are
+      -- shown as ???? with unknown PP instead of disappearing from the list.
+      if self.page == 2 and state.isShadow then
+        -- Shadow Rush has no usable PP counter in Colosseum.
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("fill", 104, 80, 48, 8)
+        love.graphics.setColor(0, 0, 0, 1)
+        Font.draw("--/--", 112, 80)
+
+        local firstLocked = 2 + hooks.unlockedNormalMoves(state)
+        for i = firstLocked, 4 do
+          local y = 72 + (i - 1) * 16
+          love.graphics.setColor(1, 1, 1, 1)
+          love.graphics.rectangle("fill", 8, y, 144, 16)
+          love.graphics.setColor(0, 0, 0, 1)
+          Font.draw("????", 16, y)
+          Font.draw("PP", 88, y + 8)
+          Font.draw("??/??", 112, y + 8)
+        end
+      end
+
       love.graphics.setColor(1, 1, 1, 1)
       love.graphics.rectangle("fill", 8, 64, 56, 9)
       love.graphics.setColor(0, 0, 0, 1)
@@ -171,16 +193,12 @@ function installShadowUIRuntime(mod)
 
     local mon = self.mon
     local def = self.game.data.pokemon[mon.species]
-    local maxHeart = state.heartMax or HEART_MAX
-    local heart = math.max(0, math.min(maxHeart, state.heart or maxHeart))
-    local closedSections = state.purified and 0 or hooks.section(state)
-    local percent = maxHeart > 0 and math.floor(heart * 100 / maxHeart + 0.5) or 0
-    local nature = (state.purified or hooks.natureVisible(state))
+    local closedSections = hooks.section(state)
+    local nature = hooks.natureVisible(state)
       and (state.nature or "UNKNOWN") or "????"
-    local mode = state.purified and "PURIFIED"
-      or (state.hyperMode and "HYPER MODE" or "NORMAL")
-    local moveCount = state.purified and 4
-      or math.min(4, 1 + hooks.unlockedNormalMoves(state))
+    local mode = state.hyperMode and "HYPER MODE" or "NORMAL"
+    local expState = hooks.natureVisible(state)
+      and (((state.expBank or 0) > 0) and "STORING" or "READY") or "LOCKED"
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", 0, 0, 160, 144)
@@ -188,7 +206,7 @@ function installShadowUIRuntime(mod)
     Font.drawBox(0, 0, 20, 18)
     Font.draw("SHADOW DATA", 8, 8)
     Font.draw(mon.nickname or def.name, 8, 24)
-    Font.draw(state.purified and "PURIFIED" or "ACTIVE", 96, 24)
+    Font.draw("ACTIVE", 104, 24)
 
     Font.draw("HEART GAUGE", 8, 40)
     for i = 1, 5 do
@@ -198,19 +216,16 @@ function installShadowUIRuntime(mod)
         love.graphics.rectangle("fill", x + 2, 54, 20, 5)
       end
     end
-    Font.draw(("%d%% CLOSED"):format(percent), 8, 64)
-    Font.draw(("S%d/5"):format(closedSections), 120, 64)
 
-    Font.draw("NATURE/", 8, 80)
-    Font.draw(nature, 80, 80)
-    Font.draw("MODE/", 8, 96)
-    Font.draw(mode, 80, 96)
-    Font.draw("MOVES/", 8, 112)
-    Font.draw(("%d/4 UNLOCKED"):format(moveCount), 80, 112)
-    Font.draw("EXP/" .. tostring(state.expBank or 0), 8, 128)
-    Font.draw(("STEP/%03d"):format(state.stepCounter or 0), 88, 128)
+    Font.draw(heartMessage(state), 8, 64)
+    Font.draw("NATURE/", 8, 88)
+    Font.draw(nature, 80, 88)
+    Font.draw("MODE/", 8, 104)
+    Font.draw(mode, 80, 104)
+    Font.draw("EXP/", 8, 120)
+    Font.draw(expState, 80, 120)
 
-    if not state.purified and heart == 0 then
+    if (state.heart or 0) == 0 then
       love.graphics.setColor(1, 1, 1, 1)
       love.graphics.rectangle("fill", 56, 8, 96, 9)
       love.graphics.setColor(0, 0, 0, 1)

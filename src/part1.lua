@@ -1,4 +1,4 @@
--- Colosseum Shadow System v1.0.0
+-- Colosseum Shadow System v1.3.0
 --
 -- Directly playable vertical slice for Gen1Recomp.
 -- All player-facing content is deliberately written in English.
@@ -25,16 +25,8 @@ NATURES = {
   "CALM", "GENTLE", "SASSY", "CAREFUL", "QUIRKY",
 }
 
--- These coefficients preserve Colosseum's Nature-dependent architecture.
--- They are isolated here so later reverse-engineered constants can replace
--- them without touching battle or save code.
-NATURE_TEMPERAMENT = {
-  HARDY=1.00, LONELY=1.10, BRAVE=0.90, ADAMANT=1.05, NAUGHTY=1.15,
-  BOLD=0.90, DOCILE=1.00, RELAXED=0.85, IMPISH=0.95, LAX=1.10,
-  TIMID=0.85, HASTY=1.10, SERIOUS=1.00, JOLLY=1.05, NAIVE=1.15,
-  MODEST=0.95, MILD=1.10, QUIET=0.85, BASHFUL=1.00, RASH=1.15,
-  CALM=0.90, GENTLE=1.05, SASSY=0.90, CAREFUL=0.95, QUIRKY=1.00,
-}
+-- Part 9 replaces the compatibility fallbacks below with the verified
+-- Colosseum Nature/action and Hyper Mode tables before gameplay begins.
 
 NORMAL_MOVES = { "THUNDERSHOCK", "TAIL_WHIP", "THUNDER_WAVE" }
 PURIFICATION_MOVE = "QUICK_ATTACK"
@@ -155,27 +147,17 @@ end
 function reduceHeart(mon, data, baseAmount, action)
   local state = shadow(mon)
   if not state or not state.isShadow then return nil end
-  local temperament = NATURE_TEMPERAMENT[state.nature] or 1
-  local amount = math.max(1, math.floor(baseAmount * temperament + 0.5))
+  local amount = math.max(1, math.floor(baseAmount or 1))
   local before = section(state)
   state.heart = math.max(0, (state.heart or HEART_MAX) - amount)
   local after = section(state)
   state.lastHeartAction = action
   refreshShadowMoves(mon, data)
-  return {
-    amount = amount,
-    before = before,
-    after = after,
-    threshold = after < before,
-    ready = state.heart == 0,
-  }
+  return { amount = amount, before = before, after = after,
+           threshold = after < before, ready = state.heart == 0 }
 end
 
-function hyperRate(state)
-  local rates = { [5]=0.24, [4]=0.20, [3]=0.15, [2]=0.10, [1]=0.05, [0]=0 }
-  local temperament = NATURE_TEMPERAMENT[state.nature] or 1
-  return math.max(0, math.min(0.35, (rates[section(state)] or 0) * temperament))
-end
+function hyperRate() return 0 end
 
 function eachOwnedMon(save, fn)
   for _, mon in ipairs(save.party or {}) do fn(mon, "party") end
@@ -216,4 +198,3 @@ function removeDemoShadow(save)
     if state and state.shadowId == SHADOW_ID then save.daycare.mon = nil end
   end
 end
-

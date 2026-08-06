@@ -41,14 +41,25 @@ function refreshPartyShadowMoves(game)
 end
 
 function stepHeart(game)
-  for _, mon in ipairs(game.save.party or {}) do
+  local function advance(mon, action)
     local state = shadow(mon)
-    if state and state.isShadow then
-      state.stepCounter = (state.stepCounter or 0) + 1
-      while state.stepCounter >= 256 do
-        state.stepCounter = state.stepCounter - 256
-        reduceHeart(mon, game.data, 250, "WALK_256")
-      end
+    if not (state and state.isShadow) then return end
+    state.stepCounter = (state.stepCounter or 0) + 1
+    while state.stepCounter >= 256 do
+      state.stepCounter = state.stepCounter - 256
+      reduceHeart(mon, game.data, nil, action)
+    end
+  end
+
+  for _, mon in ipairs(game.save.party or {}) do advance(mon, "PARTY") end
+
+  -- Colosseum also opens the heart every 256 steps in Day Care, without
+  -- granting the Shadow Pokémon Day Care experience.
+  local daycare = game.save.daycare
+  if type(daycare) == "table" then
+    if daycare.mon then advance(daycare.mon, "DAYCARE") end
+    if daycare[1] and type(daycare[1]) == "table" then
+      advance(daycare[1], "DAYCARE")
     end
   end
 end
@@ -89,4 +100,3 @@ function setupPlayer(mod, game)
   end
   return addedStarter
 end
-

@@ -9,7 +9,6 @@ function installBattleRuntime(mod)
 
   local Runtime = require("src.mods.Runtime")
   local Strings = require("src.core.Strings")
-  local Font = require("src.render.Font")
   local TextBox = require("src.render.TextBox")
 
   local vanillaNewTrainer = BattleState.newTrainer
@@ -94,55 +93,6 @@ function installBattleRuntime(mod)
     return vanillaStoreCaught(self)
   end
 
-  local vanillaTryRun = BattleState.tryRun
-  BattleState.tryRun = function(self)
-    if not self.colosseumShadowBattle then return vanillaTryRun(self) end
-
-    self.phase = "messages"
-    self.afterQueue = "menu"
-    local mon = self.player and self.player.mon
-    local state = shadow(mon)
-    if state and state.isShadow and state.hyperMode then
-      state.hyperMode = false
-      local result = reduceHeart(mon, self.data, 700, "CALL")
-      self:say(Strings("%s called out to\n%s!", self.game.save.player.name,
-        monName(self.game, mon)))
-      self:sayNext(monName(self.game, mon) .. " came to\nits senses!")
-      if result and result.threshold then
-        self:sayNext("The door to its heart\nopened a little!")
-      end
-    elseif mon and mon.status == "SLP" then
-      mon.status = nil
-      self:say(Strings("%s called out to\n%s!", self.game.save.player.name,
-        monName(self.game, mon)))
-      self:sayNext(monName(self.game, mon) .. " woke up!")
-    else
-      self:say(Strings("%s called out to\n%s!", self.game.save.player.name,
-        monName(self.game, mon)))
-      self:sayNext("But nothing happened!")
-    end
-    self:act(function()
-      self:executeAction(self.enemy, self.player, self:enemyAction())
-    end)
-    self:queueResidual(self.player, self.enemy)
-    self:act(function() self:endOfTurn() end)
-  end
-
-  local vanillaDrawTextArea = BattleState.drawTextArea
-  if vanillaDrawTextArea then
-    BattleState.drawTextArea = function(self, ...)
-      local results = { vanillaDrawTextArea(self, ...) }
-      if self.colosseumShadowBattle and self.phase == "menu"
-         and love and love.graphics then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.rectangle("fill", 126, 126, 34, 10)
-        love.graphics.setColor(0, 0, 0, 1)
-        Font.draw("CALL", 128, 128)
-      end
-      return unpack(results)
-    end
-  end
-
   local vanillaApplyDamage = BattleState.applyDamage
   BattleState.applyDamage = function(self, target, damage)
     local dealt = vanillaApplyDamage(self, target, damage)
@@ -157,34 +107,6 @@ function installBattleRuntime(mod)
   BattleState.performMove = function(self, user, target, moveInst, isCalled)
     local state = user and shadow(user.mon)
     local moveId = moveInst and moveInst.id
-
-    if user and user.isPlayer and state and state.isShadow
-       and state.hyperMode and moveId ~= SHADOW_MOVE and not isCalled then
-      local roll = self.rng(1, 100)
-      if roll > 45 then
-        if roll <= 65 then
-          self:sayNext(monName(self.game, user.mon)
-            .. " ignored orders\nin HYPER MODE!")
-          return
-        elseif roll <= 80 then
-          self:sayNext(monName(self.game, user.mon)
-            .. " hurt itself in\nHYPER MODE!")
-          local recoil = math.max(1, math.floor(user.mon.stats.hp / 8))
-          vanillaApplyDamage(self, user, recoil)
-          if user.mon.hp <= 0 then self:onFaint(user) end
-          return
-        elseif roll <= 90 then
-          self:sayNext(monName(self.game, user.mon)
-            .. " turned away from\nthe battle!")
-          return
-        else
-          self:sayNext(monName(self.game, user.mon)
-            .. " used SHADOW RUSH\ninstead!")
-          return self:performMove(user, target,
-            { id = SHADOW_MOVE, pp = 64 }, true)
-        end
-      end
-    end
 
     if moveId ~= SHADOW_MOVE then
       return vanillaPerformMove(self, user, target, moveInst, isCalled)
@@ -229,4 +151,3 @@ function installBattleRuntime(mod)
     return vanillaAskNickname(self, mon, displayName)
   end
 end
-
