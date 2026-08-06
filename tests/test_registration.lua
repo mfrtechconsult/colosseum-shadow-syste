@@ -3,6 +3,7 @@ package.preload["src.battle.BattleState"] = function()
     newTrainer = function()
       return { enemy = { mon = {} }, enemyParty = { {} } }
     end,
+    enter = function(self) self.queue = self.queue or {} end,
     throwBall = function() end,
     storeCaughtMon = function() end,
     tryRun = function() end,
@@ -10,6 +11,13 @@ package.preload["src.battle.BattleState"] = function()
     applyDamage = function(_, _, damage) return damage end,
     performMove = function() end,
     askNicknameUI = function() end,
+  }
+end
+
+package.preload["src.ui.SummaryMenu"] = function()
+  return {
+    update = function() end,
+    draw = function() end,
   }
 end
 
@@ -123,5 +131,9 @@ assert(registered.hooks["battle.crit"], "critical hook missing")
 assert(registered.hooks["battle.exp_award"], "EXP hook missing")
 assert(registered.hooks["evolution.check"], "evolution hook missing")
 assert(registered.events["game.ready"], "game.ready handler missing")
+local BattleState = require("src.battle.BattleState")
+local SummaryMenu = require("src.ui.SummaryMenu")
+assert(BattleState._colosseumShadowUIInstalledV1, "battle reveal UI missing")
+assert(SummaryMenu._colosseumShadowUIInstalledV1, "summary UI missing")
 
 print("Registration bootstrap test passed.")
