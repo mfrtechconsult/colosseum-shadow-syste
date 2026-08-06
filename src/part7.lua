@@ -80,9 +80,9 @@ function installShadowUIRuntime(mod)
           love.graphics.rectangle("line", cx - 22 - pulse / 2,
             cy - 22 - pulse / 2, 44 + pulse, 44 + pulse)
           love.graphics.setColor(1, 1, 1, 1)
-          love.graphics.rectangle("fill", width - 82, 69, 80, 10)
+          love.graphics.rectangle("fill", width - 82, 69, 82, 10)
           love.graphics.setColor(0, 0, 0, 1)
-          Font.draw("DARK AURA!", width - 78, 70)
+          Font.draw("DARK AURA!", width - 80, 70)
         end
 
         love.graphics.setColor(1, 1, 1, 1)
@@ -168,7 +168,7 @@ function installShadowUIRuntime(mod)
       end
     end
     Font.draw(("%d%% CLOSED"):format(percent), 8, 64)
-    Font.draw(("WALK %d/256"):format(state.stepCounter or 0), 80, 64)
+    Font.draw(("S%d/5"):format(closedSections), 120, 64)
 
     Font.draw("NATURE/", 8, 80)
     Font.draw(nature, 80, 80)
@@ -176,14 +176,14 @@ function installShadowUIRuntime(mod)
     Font.draw(mode, 80, 96)
     Font.draw("MOVES/", 8, 112)
     Font.draw(("%d/4 UNLOCKED"):format(moveCount), 80, 112)
-    Font.draw("EXP BANK/", 8, 128)
-    Font.draw(tostring(state.expBank or 0), 88, 128)
+    Font.draw("EXP/" .. tostring(state.expBank or 0), 8, 128)
+    Font.draw(("STEP/%03d"):format(state.stepCounter or 0), 88, 128)
 
     if not state.purified and heart == 0 then
       love.graphics.setColor(1, 1, 1, 1)
-      love.graphics.rectangle("fill", 64, 8, 88, 9)
+      love.graphics.rectangle("fill", 56, 8, 96, 9)
       love.graphics.setColor(0, 0, 0, 1)
-      Font.draw("READY TO PURIFY", 64, 8)
+      Font.draw("PURIFY READY", 56, 8)
     end
     love.graphics.setColor(1, 1, 1, 1)
   end
