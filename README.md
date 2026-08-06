@@ -1,4 +1,4 @@
-# Colosseum Shadow System v1.1.0
+# Colosseum Shadow System v1.1.1
 
 A directly playable Shadow Pokémon vertical slice for Gen1Recomp.
 
@@ -37,7 +37,8 @@ another mod's runtime objects.
 
 ## Mechanics included
 
-- Animated dark-aura reveal and a persistent SHADOW battle badge.
+- Animated dark-aura reveal and a SHADOW badge shown only while the actual
+  Shadow battler sprite is visible.
 - A third SHADOW DATA page in the normal Pokémon summary screen, including
   Heart Gauge, Nature visibility, Hyper Mode, unlocked moves, walking progress,
   and stored EXP.
