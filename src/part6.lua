@@ -3,6 +3,7 @@ return function(mod)
   registerCommands(mod)
   registerPalletScripts(mod)
   installBattleRuntime(mod)
+  installShadowUIRuntime(mod)
 
   mod.hooks:wrap("battle.crit", function(next, ctx)
     local mon = ctx and ctx.attacker and ctx.attacker.mon
@@ -62,9 +63,6 @@ return function(mod)
 
   mod.events:on("battle.started", function(ev)
     local battle = ev.battle
-    if battle and battle.colosseumShadowBattle then
-      battle:sayNext("RUI: That POKéMON...\nIt's a SHADOW POKéMON!")
-    end
     local mon = battle and battle.player and battle.player.mon
     if isActiveShadow(mon) then
       local result = reduceHeart(mon, battle.data, 500, "BATTLE_ENTRY")
