@@ -14,6 +14,7 @@ package.preload["src.battle.BattleState"] = function()
   }
 end
 
+
 package.preload["src.ui.SummaryMenu"] = function()
   return {
     update = function() end,
@@ -135,5 +136,32 @@ local BattleState = require("src.battle.BattleState")
 local SummaryMenu = require("src.ui.SummaryMenu")
 assert(BattleState._colosseumShadowUIInstalledV1, "battle reveal UI missing")
 assert(SummaryMenu._colosseumShadowUIInstalledV1, "summary UI missing")
+
+local shadowMon = {
+  colosseumShadow = {
+    version = 1, isShadow = true, purified = false,
+  },
+}
+local normalMon = {}
+local visibilityBattle = {
+  growInScale = function() return nil end,
+  fxHidden = function() return false end,
+}
+local visible = assert(BattleState._colosseumShadowBadgeVisibleV1,
+  "Shadow badge visibility helper missing")
+visibilityBattle.showEnemyTrainer = true
+assert(not visible(visibilityBattle, { mon = shadowMon }, "enemy"),
+  "badge must not appear on the enemy trainer portrait")
+visibilityBattle.showEnemyTrainer = false
+assert(visible(visibilityBattle, { mon = shadowMon }, "enemy"),
+  "badge must appear on a visible Shadow enemy")
+assert(not visible(visibilityBattle, { mon = normalMon }, "enemy"),
+  "badge must not appear on a normal enemy Pokémon")
+visibilityBattle.showPlayerBack = true
+assert(not visible(visibilityBattle, { mon = shadowMon }, "player"),
+  "badge must not appear on the player trainer portrait")
+visibilityBattle.showPlayerBack = false
+assert(visible(visibilityBattle, { mon = shadowMon }, "player"),
+  "badge must appear on a visible player Shadow Pokémon")
 
 print("Registration bootstrap test passed.")
