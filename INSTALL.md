@@ -27,15 +27,16 @@ mod manager and use its mods-folder shortcut rather than guessing the path.
 ## First test
 
 1. Talk to the **Scientist/Researcher**.
-2. Talk to the **Rocket/Cipher Peon**.
+2. Talk to the **Rocket/Cipher Peon**. The enemy receives an animated dark-aura reveal and a persistent SHADOW badge.
 3. During the Trainer battle, choose **ITEM** and throw a Poké Ball.
 4. The bottom-right command is **CALL** during this battle.
-5. After a successful Snag, talk to the **Gym Guide/Monitor operator**.
+5. After a successful Snag, inspect Pikachu from the party or PC. Advance to the third **SHADOW DATA** page.
 6. Put Shadow Pikachu in the party.
 7. Use Shadow Rush until Hyper Mode occurs, then choose **CALL**.
 8. Talk repeatedly to the **Mr. Fuji/Relic Keeper** and use Vivid Scent.
 9. Once the gauge is empty, talk again to purify Pikachu.
 10. Talk to the Monitor to confirm `PURIFIED`.
+11. Inspect the purified Pokémon and confirm the summary now closes after page 2.
 
 ## Repeat the demo
 
