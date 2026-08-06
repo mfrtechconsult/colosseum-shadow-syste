@@ -1,4 +1,4 @@
-# Colosseum Shadow System v1.1.1
+# Colosseum Shadow System v1.2.0
 
 A directly playable Shadow Pokémon vertical slice for Gen1Recomp.
 
@@ -39,9 +39,11 @@ another mod's runtime objects.
 
 - Animated dark-aura reveal and a SHADOW badge shown only while the actual
   Shadow battler sprite is visible.
-- A third SHADOW DATA page in the normal Pokémon summary screen, including
-  Heart Gauge, Nature visibility, Hyper Mode, unlocked moves, walking progress,
-  and stored EXP.
+- A third SHADOW DATA page in the normal Pokémon summary screen while the
+  Pokémon is still Shadow, including Heart Gauge, Nature visibility, Hyper
+  Mode, unlocked moves, walking progress, and stored EXP.
+- Purification removes every Shadow summary marker and restores the standard
+  two-page Pokémon summary, matching Pokémon Colosseum's lifecycle.
 - Shadow type with neutral effectiveness.
 - Shadow Rush: 90 power, 100 accuracy, no consumed PP, recoil based on
   maximum HP, and an additional Hyper Mode critical roll.
