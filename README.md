@@ -1,4 +1,4 @@
-# Colosseum Shadow System v1.0.0
+# Colosseum Shadow System v1.1.0
 
 A directly playable Shadow Pokémon vertical slice for Gen1Recomp.
 
@@ -11,8 +11,9 @@ Pallet Town. It does not replace any original Pallet Town NPC.
   heals the party, and supplies a level 15 Eevee when the player has no
   Pokémon. After the demo, the Researcher can reset it.
 - **Cipher Peon** — starts a Trainer battle against a Shadow Pikachu.
-- **Shadow Monitor operator** — displays the encounter status, Heart Gauge,
-  Nature, Hyper Mode, location, and stored EXP.
+- **Shadow Monitor operator** — optional debug display for encounter state.
+  Normal progression tracking is available directly from the Pokémon summary
+  screen in the party or PC.
 - **Relic Keeper** — applies Vivid Scent for fast testing and performs
   purification once the Heart Gauge reaches zero.
 
@@ -36,6 +37,10 @@ another mod's runtime objects.
 
 ## Mechanics included
 
+- Animated dark-aura reveal and a persistent SHADOW battle badge.
+- A third SHADOW DATA page in the normal Pokémon summary screen, including
+  Heart Gauge, Nature visibility, Hyper Mode, unlocked moves, walking progress,
+  and stored EXP.
 - Shadow type with neutral effectiveness.
 - Shadow Rush: 90 power, 100 accuracy, no consumed PP, recoil based on
   maximum HP, and an additional Hyper Mode critical roll.
