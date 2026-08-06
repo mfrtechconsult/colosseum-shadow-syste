@@ -5,6 +5,7 @@
 local PARTS = {
   "src/part1.lua", "src/part2.lua", "src/part3.lua",
   "src/part4.lua", "src/part5.lua", "src/part6.lua",
+  "src/part7.lua",
 }
 
 local function readPart(mod, path)
