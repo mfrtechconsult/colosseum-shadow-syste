@@ -11,6 +11,34 @@ function installShadowUIRuntime(mod)
     isActiveShadow = isActiveShadow,
   }
 
+  -- A Shadow badge belongs to the currently drawn Pokémon sprite, never to
+  -- the trainer/back portrait that temporarily occupies the same battle slot.
+  BattleState._colosseumShadowBadgeVisibleV1 = function(self, battler, side)
+    local hooks = BattleState._colosseumShadowUIHooksV1
+    if not battler or not battler.mon or battler.fainted
+       or not hooks or not hooks.isActiveShadow(battler.mon) then
+      return false
+    end
+
+    if side == "enemy" then
+      if self.showEnemyTrainer or self.enemySendingOut or self.enemyHidden then
+        return false
+      end
+    else
+      if self.showPlayerBack or self.sendingOut or self.safari or self.demo then
+        return false
+      end
+    end
+
+    if type(self.growInScale) == "function" and self:growInScale(battler) then
+      return false
+    end
+    if type(self.fxHidden) == "function" and self:fxHidden(battler) then
+      return false
+    end
+    return true
+  end
+
   if not BattleState._colosseumShadowUIInstalledV1 then
     BattleState._colosseumShadowUIInstalledV1 = true
 
@@ -46,8 +74,11 @@ function installShadowUIRuntime(mod)
 
         local hooks = BattleState._colosseumShadowUIHooksV1
         if not hooks then return unpack(results) end
-        local enemyShadow = self.enemy and hooks.isActiveShadow(self.enemy.mon)
-        local playerShadow = self.player and hooks.isActiveShadow(self.player.mon)
+        local badgeVisible = BattleState._colosseumShadowBadgeVisibleV1
+        local enemyShadow = badgeVisible
+          and badgeVisible(self, self.enemy, "enemy") or false
+        local playerShadow = badgeVisible
+          and badgeVisible(self, self.player, "player") or false
         if not enemyShadow and not playerShadow then return unpack(results) end
 
         local width = 160
