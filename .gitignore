@@ -1,0 +1,13 @@
+# Generated release archives and checksums
+*.zip
+*.sha256
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
