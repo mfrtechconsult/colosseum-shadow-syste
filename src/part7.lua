@@ -127,6 +127,7 @@ function installShadowUIRuntime(mod)
 
   SummaryMenu._colosseumShadowUIHooksV1 = {
     shadow = shadow,
+    isActiveShadow = isActiveShadow,
     section = section,
     natureVisible = natureVisible,
     unlockedNormalMoves = unlockedNormalMoves,
@@ -139,7 +140,10 @@ function installShadowUIRuntime(mod)
   SummaryMenu.update = function(self, dt)
     local hooks = SummaryMenu._colosseumShadowUIHooksV1
     local state = hooks and hooks.shadow(self.mon)
-    if not state then return vanillaUpdate(self, dt) end
+    if not (state and hooks.isActiveShadow(self.mon)) then
+      if (self.page or 1) > 2 then self.page = 2 end
+      return vanillaUpdate(self, dt)
+    end
 
     local input = self.game.input
     if input:wasPressed("a") or input:wasPressed("b") then
@@ -157,7 +161,9 @@ function installShadowUIRuntime(mod)
   SummaryMenu.draw = function(self)
     local hooks = SummaryMenu._colosseumShadowUIHooksV1
     local state = hooks and hooks.shadow(self.mon)
-    if not state then return vanillaDraw(self) end
+    if not (state and hooks.isActiveShadow(self.mon)) then
+      return vanillaDraw(self)
+    end
 
     if self.page ~= 3 then
       vanillaDraw(self)
