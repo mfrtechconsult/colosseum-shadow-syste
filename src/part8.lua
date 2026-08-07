@@ -26,9 +26,9 @@ function installPurifiedSummaryLifecycle()
     local state = mon and mon.colosseumShadow
     if not state then return fn(self, ...) end
 
-    -- Part 7 interprets any stored Shadow record as a three-page summary.
-    -- Hide only the reference while the vanilla path executes, then restore
-    -- the exact same table so saving, the ribbon, and reset logic are intact.
+    -- Part 7 now rejects non-active Shadow records itself. This extra guard
+    -- keeps the ordinary renderer isolated from the retained history record
+    -- and protects against other wrappers that inspect that record directly.
     mon.colosseumShadow = nil
     local results = { pcall(fn, self, ...) }
     mon.colosseumShadow = state
@@ -42,7 +42,8 @@ function installPurifiedSummaryLifecycle()
       return previousUpdate(self, dt)
     end
 
-    -- This only matters when 1.2.0 is hot-reloaded while page 3 is open.
+    -- Also repairs a summary that was already sitting on page 3 when a new
+    -- mod version was loaded.
     if (self.page or 1) > 2 then self.page = 2 end
     return withoutShadowRecord(self, previousUpdate, dt)
   end
@@ -54,5 +55,3 @@ function installPurifiedSummaryLifecycle()
     return withoutShadowRecord(self, previousDraw)
   end
 end
-
-installPurifiedSummaryLifecycle()
