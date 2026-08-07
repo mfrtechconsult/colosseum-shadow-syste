@@ -1,3 +1,45 @@
+-- Generic trainer -> Shadow encounter registry. The original Pallet demo is
+-- kept as the first entry so v1.6 behavior remains unchanged.
+SHADOW_TRAINER_ENCOUNTERS = {
+  [TRAINER_ID] = {
+    partySlot = 0, -- canonical/adapter API is zero-based
+    shadowId = SHADOW_ID,
+    persistSnapshot = true,
+    snapshotKey = "encounter_snapshot",
+    statusKey = "encounter_status",
+  },
+}
+
+SNAG_ACCESS_CHECK = nil
+
+function registerShadowTrainerEncounter(trainerId, config)
+  assert(type(trainerId) == "string" and trainerId ~= "",
+    "Shadow trainer encounter requires a trainer id")
+  assert(type(config) == "table",
+    "Shadow trainer encounter requires a config table")
+  local row = copy(config)
+  row.partySlot = math.max(0, math.floor(row.partySlot or 0))
+  row.shadowId = row.shadowId or ("SHADOW_" .. trainerId)
+  SHADOW_TRAINER_ENCOUNTERS[trainerId] = row
+  return row
+end
+
+function unregisterShadowTrainerEncounter(trainerId)
+  local old = SHADOW_TRAINER_ENCOUNTERS[trainerId]
+  SHADOW_TRAINER_ENCOUNTERS[trainerId] = nil
+  return old
+end
+
+function shadowTrainerEncounter(trainerId)
+  return SHADOW_TRAINER_ENCOUNTERS[trainerId]
+end
+
+function setSnagAccessCheck(fn)
+  assert(fn == nil or type(fn) == "function",
+    "Snag access check must be a function or nil")
+  SNAG_ACCESS_CHECK = fn
+end
+
 function installBattleRuntime(mod)
   local BattleState = require("src.battle.BattleState")
   BattleState._colosseumShadowModV1 = mod
@@ -11,28 +53,57 @@ function installBattleRuntime(mod)
   local Strings = require("src.core.Strings")
   local TextBox = require("src.render.TextBox")
 
+  local function snagAccessAllowed(battle)
+    if type(SNAG_ACCESS_CHECK) == "function" then
+      local ok, allowed = pcall(SNAG_ACCESS_CHECK, battle)
+      return ok and allowed == true
+    end
+    -- Backwards-compatible default for the bundled Pallet demonstration.
+    return liveMod().save:get("snag_machine", false) == true
+  end
+
   local vanillaNewTrainer = BattleState.newTrainer
   BattleState.newTrainer = function(game, oppClass, partyIndex)
     local battle = vanillaNewTrainer(game, oppClass, partyIndex)
-    if oppClass ~= TRAINER_ID then return battle end
+    local encounter = shadowTrainerEncounter(oppClass)
+    if not encounter then return battle end
 
-    battle.colosseumShadowBattle = true
-    battle.colosseumShadowId = SHADOW_ID
-    local mon = battle.enemy and battle.enemy.mon
-    local snapshot = liveMod().save:get("encounter_snapshot")
-    if snapshot and mon then
-      local restored = copy(snapshot)
-      for k in pairs(mon) do mon[k] = nil end
-      for k, v in pairs(restored) do mon[k] = v end
-    elseif mon then
-      attachShadow(mon, game.data)
-      liveMod().save:set("encounter_snapshot", copy(mon))
+    local slot = math.max(0, math.floor(encounter.partySlot or 0)) + 1
+    local mon = battle.enemyParty and battle.enemyParty[slot]
+    if not mon then
+      -- Invalid adapter data should not corrupt an otherwise valid battle.
+      battle.colosseumShadowEncounterError =
+        "Shadow party slot " .. tostring(encounter.partySlot) ..
+        " missing for " .. tostring(oppClass)
+      return battle
     end
 
-    if mon then
-      attachShadow(mon, game.data)
-      battle.enemyParty[1] = mon
-      battle.enemy.mon = mon
+    battle.colosseumShadowBattle = true
+    battle.colosseumShadowId = encounter.shadowId
+    battle.colosseumShadowEncounter = encounter
+    battle.colosseumShadowPartySlot = slot
+
+    local restored
+    if encounter.persistSnapshot then
+      restored = liveMod().save:get(encounter.snapshotKey or "encounter_snapshot")
+    end
+    if restored then
+      restored = copy(restored)
+      for k in pairs(mon) do mon[k] = nil end
+      for k, v in pairs(restored) do mon[k] = v end
+    else
+      attachShadow(mon, game.data, encounter)
+      if encounter.persistSnapshot then
+        liveMod().save:set(encounter.snapshotKey or "encounter_snapshot", copy(mon))
+      end
+    end
+
+    -- Ensure legacy snapshots receive the current encounter configuration.
+    attachShadow(mon, game.data, encounter)
+    battle.enemyParty[slot] = mon
+
+    -- If the Shadow is already the active battler, refresh its battle cache.
+    if battle.enemy and battle.enemy.mon == mon then
       battle.enemy.curMoves = mon.moves
       battle.enemy.curStats = copy(mon.stats)
       battle.enemy.curTypes = copy(game.data.pokemon[mon.species].types)
@@ -46,7 +117,7 @@ function installBattleRuntime(mod)
     if not (self.colosseumShadowBattle and isActiveShadow(target)) then
       return vanillaThrowBall(self, ball)
     end
-    if not liveMod().save:get("snag_machine", false) then
+    if not snagAccessAllowed(self) then
       return vanillaThrowBall(self, ball)
     end
 
@@ -84,13 +155,28 @@ function installBattleRuntime(mod)
 
   local vanillaStoreCaught = BattleState.storeCaughtMon
   BattleState.storeCaughtMon = function(self)
-    local snagged = self.colosseumShadowBattle
-      and self.enemy and isActiveShadow(self.enemy.mon)
-    if snagged then
-      liveMod().save:set("encounter_status", "snagged")
-      liveMod().save:set("encounter_snapshot", false)
+    local mon = self.enemy and self.enemy.mon
+    local state = mon and shadow(mon)
+    local snagged = self.colosseumShadowBattle and state and state.isShadow
+    local encounter = self.colosseumShadowEncounter
+
+    if snagged and encounter and encounter.persistSnapshot then
+      liveMod().save:set(encounter.statusKey or "encounter_status", "snagged")
+      liveMod().save:set(encounter.snapshotKey or "encounter_snapshot", false)
     end
-    return vanillaStoreCaught(self)
+
+    local results = { vanillaStoreCaught(self) }
+    if snagged then
+      Runtime.emit("shadow.snagged", {
+        battle = self,
+        mon = mon,
+        shadowId = state.shadowId,
+        trainerId = self.opponentClass,
+        partySlot = self.colosseumShadowPartySlot
+          and (self.colosseumShadowPartySlot - 1) or nil,
+      })
+    end
+    return unpack(results)
   end
 
   local vanillaApplyDamage = BattleState.applyDamage
@@ -107,8 +193,9 @@ function installBattleRuntime(mod)
   BattleState.performMove = function(self, user, target, moveInst, isCalled)
     local state = user and shadow(user.mon)
     local moveId = moveInst and moveInst.id
+    local shadowMove = (state and state.shadowMove) or SHADOW_MOVE
 
-    if moveId ~= SHADOW_MOVE then
+    if moveId ~= shadowMove then
       return vanillaPerformMove(self, user, target, moveInst, isCalled)
     end
 
