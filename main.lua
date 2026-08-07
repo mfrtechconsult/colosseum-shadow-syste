@@ -10,15 +10,16 @@ local PARTS = {
 }
 
 local function readPart(mod, path)
-  local full = ((mod and mod.path) and (mod.path .. "/" .. path)) or path
-  if love and love.filesystem then
-    local ok, data = pcall(love.filesystem.read, full)
-    if ok and type(data) == "string" then return data end
-  end
-  local file, err = io.open(full, "rb")
-  assert(file, err or ("cannot open " .. full))
-  local data = file:read("*a")
-  file:close()
+  -- Gen1Recomp deliberately abstracts a mod's backing filesystem. In normal
+  -- LÖVE play that is love.filesystem; the official SDK test harness mounts
+  -- mods through an aliasing filesystem. `mod:read()` is the supported seam
+  -- for both, whereas io.open(mod.path/...) bypasses that mount and makes a
+  -- perfectly valid mod impossible to load headlessly.
+  assert(mod and type(mod.read) == "function",
+    "Shadow-system split loader requires Gen1Recomp mod:read()")
+  local data = mod:read(path)
+  assert(type(data) == "string",
+    "cannot read Shadow-system part " .. tostring(path))
   return data
 end
 
