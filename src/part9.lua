@@ -205,10 +205,10 @@ function installBattleRuntime(mod)
 
   BattleState._colosseumShouldCallV13 = function(self)
     if self.safari or self.demo or self.kind == "link" then return false end
-    -- Colosseum Story battles always use CALL in place of RUN. Wild Kanto
-    -- encounters retain RUN unless CALL has a purpose, preserving the host
-    -- game's exploration without weakening Shadow mechanics.
-    if self.kind == "trainer" then return true end
+    -- CALL is a command directed at the player's active Pokémon. An enemy
+    -- Shadow Pokémon must never make CALL appear for a normal, awake lead.
+    -- Keep vanilla RUN in that case (trainer battles will refuse escape as
+    -- usual). CALL is useful only for an active Shadow Pokémon or for sleep.
     local mon = self.player and self.player.mon
     return isActiveShadow(mon) or (mon and mon.status == "SLP") or false
   end
