@@ -23,7 +23,7 @@ Gen1Recomp/
 
 Existing saves and already-snagged demo Pikachu are retained.
 
-## Main v1.3 test
+## Main v1.4 test
 
 1. Talk to the **Researcher**, then fight the **Cipher Peon**.
 2. Confirm the dark-aura reveal appears after Pikachu is sent out.
@@ -46,12 +46,14 @@ Existing saves and already-snagged demo Pikachu are retained.
 12. Put Pikachu in Day Care and walk. It must open its Heart Gauge every 256
     steps but gain no Day Care EXP; Day Care also ends Hyper Mode.
 13. Use Vivid Scent at the Relic Keeper to accelerate the remaining gauge.
-14. At an empty gauge, confirm `PURIFY READY`, then purify.
+14. At an empty gauge, confirm `PURIFY READY`, then purify. Confirm the
+    full-screen purification ceremony plays before the result text.
 15. Verify stored EXP, possible level gains, Quick Attack replacing Shadow
     Rush, the nickname prompt, and the National Ribbon message.
-16. Inspect the purified Pokémon: it must use the ordinary two-page summary,
-    with no SHADOW marker or SHADOW DATA page.
-17. Save, fully restart Gen1Recomp, and inspect it again.
+16. Inspect the purified Pokémon immediately: it must use the ordinary
+    two-page summary, with no SHADOW marker or SHADOW DATA page.
+17. Save, fully restart Gen1Recomp, and inspect it again; the third page must
+    still be absent.
 
 ## Repeat the demo
 
