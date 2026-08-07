@@ -125,7 +125,21 @@ function registerCommands(mod)
         "The door to its heart\nis open.\nPurify this POKéMON?")
       if not ctx.lastCheck then return end
 
-      local ok, bank, oldLevel = purify(ctx.game, mon)
+      local animationResult
+      local runner = ctx.runner
+      local asynchronous = startPurificationAnimation(ctx.game, mon,
+        function(ok, bank, oldLevel)
+          animationResult = { ok, bank, oldLevel }
+          if runner then runner:resume() end
+        end)
+      if asynchronous and runner then runner:yield() end
+      local ok = animationResult and animationResult[1]
+      local bank = animationResult and animationResult[2]
+      local oldLevel = animationResult and animationResult[3]
+      if not asynchronous and not animationResult then
+        -- Headless fallback without a runner.
+        ok, bank, oldLevel = purify(ctx.game, mon)
+      end
       if not ok then
         show(ctx, "Purification failed.")
         return
@@ -202,4 +216,3 @@ function registerPalletScripts(mod)
     end
   end
 end
-
