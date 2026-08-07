@@ -1,4 +1,4 @@
-# Colosseum Shadow System v1.4.0
+# Colosseum Shadow System v1.5.0
 
 A directly playable Pokémon Colosseum-style Shadow Pokémon vertical slice for
 Gen1Recomp. All player-facing mod text is written in English.
@@ -9,7 +9,8 @@ NPCs and map objects are not replaced.
 ## Pallet Town test NPCs
 
 - **Researcher** — gives the Snag Machine, restores Poké Balls, heals the
-  party, supplies a level 15 Eevee when needed, and resets the demo.
+  party, supplies a level 15 Eevee when needed, and provides a test kit
+  (Potion, Rare Candy, Thunder Stone, TM24) before resetting/running the demo.
 - **Cipher Peon** — starts a Trainer battle against a Shadow Pikachu.
 - **Shadow Monitor operator** — optional debug/status display.
 - **Relic Keeper** — applies Vivid Scent and performs purification when the
@@ -47,9 +48,9 @@ NPCs and map objects are not replaced.
 - Hyper Shadow Rush uses a 232/256 critical rate (90.625%).
 - Hyper Mode may cause disobedience on non-Shadow Rush moves and blocks bag
   items used on that Pokémon, while Scents remain valid.
-- Call replaces Run in Trainer battles and whenever it is needed by the active
-  Pokémon in a wild battle. Call wakes sleep or ends Hyper Mode and otherwise
-  wastes the turn.
+- Call replaces Run only when the player's active Pokémon is Shadow or asleep.
+  The enemy being Shadow never enables Call. Call wakes sleep or ends Hyper
+  Mode and otherwise wastes the turn.
 - Hyper Mode ends on fainting, Call, Scent, Day Care, or rare natural recovery.
 - Shadow Pokémon cannot use Rare Candy, evolution stones, TMs/HMs, evolve,
   reorder moves, receive a nickname, or be selected for link trade.
@@ -81,3 +82,13 @@ Hyper disobedience outcomes are represented as lost-turn messages.
 The demo target is Pikachu, which was not a Shadow Pokémon in the original
 Colosseum roster. Its full Heart Gauge value of 5000 is therefore a test value;
 the Nature/action reductions and thresholds themselves follow Colosseum.
+
+## v1.5 presentation and testability
+
+- A player-owned Shadow Pokémon now receives the same dark-aura send-out effect
+  used to reveal an enemy Shadow Pokémon.
+- Hyper Mode is marked persistently in battle and on the normal summary pages,
+  in addition to the SHADOW DATA page.
+- CALL is driven exclusively by the player's active Pokémon.
+- The Researcher supplies Potion, Rare Candy, Thunder Stone, and TM24 for
+  restriction testing.
