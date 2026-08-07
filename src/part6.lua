@@ -19,6 +19,43 @@ return function(mod)
     return next(ctx)
   end)
 
+  -- v1.6 presentation lives in battle.overlay, which Gen1Recomp renders
+  -- after HUDs and battler sprites. This makes the player-side aura visible
+  -- regardless of the classic/SGB draw pipeline used underneath.
+  mod.hooks:wrap("battle.overlay", function(next, battle)
+    next(battle)
+    if not (battle and love and love.graphics) then return end
+    local mon = battle.player and battle.player.mon
+    local state = shadow(mon)
+    if not (state and state.isShadow) then return end
+
+    local start = battle._colosseumPlayerAuraStartV16
+    if start == nil then return end
+    local age = (battle.frame or 0) - start
+    if age < 0 or age >= 48 then return end
+
+    local Font = require("src.render.Font")
+    local g = love.graphics
+    local cx, cy = 32, 62
+    g.setColor(0, 0, 0, 1)
+    for i = 0, 9 do
+      local angle = (i / 10) * math.pi * 2 + age * 0.18
+      local radius = 20 + ((age + i * 5) % 14)
+      local x = math.floor(cx + math.cos(angle) * radius)
+      local y = math.floor(cy + math.sin(angle) * (radius * 0.72))
+      local size = 1 + ((i + age) % 3)
+      g.rectangle("fill", x, y, size, size)
+    end
+    local pulse = 2 + (age % 8)
+    g.rectangle("line", cx - 22 - pulse / 2, cy - 22 - pulse / 2,
+      44 + pulse, 44 + pulse)
+    g.setColor(1, 1, 1, 1)
+    g.rectangle("fill", 0, 34, 82, 10)
+    g.setColor(0, 0, 0, 1)
+    Font.draw("DARK AURA!", 2, 35)
+    g.setColor(1, 1, 1, 1)
+  end)
+
   mod.hooks:wrap("battle.exp_award", function(next, ctx)
     local originalApply = ctx.applyShare
     ctx.applyShare = function(mon, split, announce)
@@ -34,17 +71,13 @@ return function(mod)
         return
       end
 
-      local Experience = require("src.battle.Experience")
-      local clone = copy(mon)
-      local _, gained = Experience.apply(ctx.battle.data, clone,
-        ctx.battle.enemy.def, ctx.battle.enemy.mon.level,
-        ctx.battle.kind == "trainer", split, mon.traded)
-      state.expBank = (state.expBank or 0) + (gained or 0)
+      local gained = select(1, bankShadowExperience(ctx.battle, mon, split)) or 0
       if announce then
         local Strings = require("src.core.Strings")
         ctx.battle:sayNext(Strings("%s gained\n%d EXP. Points!",
-          monName(ctx.battle.game, mon), gained or 0))
-        ctx.battle:sayNext("The EXP. was stored\nuntil purification.")
+          monName(ctx.battle.game, mon), gained))
+        ctx.battle:sayNext(Strings("Stored EXP: %d",
+          state.expBank or 0))
       end
     end
     return next(ctx)
@@ -64,6 +97,12 @@ return function(mod)
     end
   end)
 
+  local function cuePlayerShadowAura(battle, battler)
+    if battle and battler and battler.isPlayer and isActiveShadow(battler.mon) then
+      battle._colosseumPlayerAuraStartV16 = battle.frame or 0
+    end
+  end
+
   local function countParticipation(battle, battler)
     if not battle then return end
     local marker = require("src.battle.BattleState")
@@ -76,10 +115,13 @@ return function(mod)
 
   mod.events:on("battle.started", function(ev)
     local battle = ev.battle
+    cuePlayerShadowAura(battle, battle and battle.player)
     countParticipation(battle, battle and battle.player)
   end)
 
   mod.events:on("battle.battler_switched", function(ev)
+    -- Aura timing is cued by BattleState:startGrowIn, after the send-out text
+    -- and POOF. This event remains responsible for Heart participation only.
     countParticipation(ev.battle, ev.battler)
   end)
 
@@ -102,6 +144,13 @@ return function(mod)
   mod.events:on("game.ready", function(ev)
     installBattleRuntime(mod)
     refreshPartyShadowMoves(ev.game)
+    -- Existing saves that installed v1.5 after already talking to the
+    -- Researcher never re-ran setupPlayer, so they never received the test
+    -- items. Grant the v1.6 kit once on load as well as on Researcher talk.
+    if not mod.save:get("test_kit_v16", false) then
+      grantShadowTestKit(ev.game)
+      mod.save:set("test_kit_v16", true)
+    end
     local ow = ev.game and ev.game.overworld
     if ow and ow.map and ow.map.id == PALLET then
       ensurePalletNpcs(mod, ev.game, ow)
