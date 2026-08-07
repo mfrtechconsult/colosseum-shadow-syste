@@ -26,6 +26,7 @@ function registerCommands(mod)
         text = text .. "\fYou had no POKéMON,\nso take this EEVEE\nfor the field test."
       end
       text = text .. "\fYour party is healed.\nYou now have at least\n25 POKé BALLS."
+        .. "\fTEST KIT:\n5 POTION, 3 RARE CANDY,\nTHUNDER STONE & TM24."
       show(ctx, text)
     end,
   })
