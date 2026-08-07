@@ -2,6 +2,7 @@
 installBattleRuntime = function() end
 
 dofile("src/part1.lua")
+dofile("src/part2.lua")
 dofile("src/part9.lua")
 
 local function eq(actual, expected, label)
@@ -19,6 +20,16 @@ end
 local function truthy(value, label)
   if not value then error(label) end
 end
+
+local kitGame = {
+  data = { items = { POTION={}, RARE_CANDY={}, THUNDER_STONE={}, TM24={} } },
+  save = { inventory = {} },
+}
+grantShadowTestKit(kitGame)
+eq(kitGame.save.inventory.POTION, 5, "test-kit Potions")
+eq(kitGame.save.inventory.RARE_CANDY, 3, "test-kit Rare Candies")
+eq(kitGame.save.inventory.THUNDER_STONE, 1, "test-kit Thunder Stone")
+eq(kitGame.save.inventory.TM24, 1, "test-kit TM24")
 
 local count = 0
 for nature, row in pairs(HEART_ACTION_VALUES) do
