@@ -87,6 +87,26 @@ function ensureStarter(game)
   return true
 end
 
+
+SHADOW_TEST_KIT = {
+  POTION = 5,
+  RARE_CANDY = 3,
+  THUNDER_STONE = 1,
+  TM24 = 1,
+}
+
+function grantShadowTestKit(game)
+  game.save.inventory = game.save.inventory or {}
+  -- Every item exercises a Shadow restriction. POTION tests the Hyper Mode
+  -- refusal; the others must be blocked while Shadow and work after
+  -- purification. Skip ids absent from unusual host-data builds.
+  for id, count in pairs(SHADOW_TEST_KIT) do
+    if not game.data.items or game.data.items[id] then
+      game.save.inventory[id] = math.max(game.save.inventory[id] or 0, count)
+    end
+  end
+end
+
 function setupPlayer(mod, game)
   local Pokemon = require("src.pokemon.Pokemon")
   local addedStarter = ensureStarter(game)
@@ -94,6 +114,9 @@ function setupPlayer(mod, game)
   game.save.inventory = game.save.inventory or {}
   game.save.inventory[SNAG_MACHINE] = 1
   game.save.inventory.POKE_BALL = math.max(game.save.inventory.POKE_BALL or 0, 25)
+
+  grantShadowTestKit(game)
+
   for _, mon in ipairs(game.save.party or {}) do Pokemon.heal(mon) end
   if not mod.save:get("encounter_status") then
     mod.save:set("encounter_status", "available")
