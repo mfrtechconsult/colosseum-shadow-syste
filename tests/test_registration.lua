@@ -18,7 +18,6 @@ package.preload["src.battle.BattleState"] = function()
   }
 end
 
-
 package.preload["src.ui.SummaryMenu"] = function()
   return {
     update = function(self) self._vanillaUpdateCalled = true end,
@@ -45,7 +44,6 @@ package.preload["src.world.OverworldController"] = function()
   }
 end
 
-
 package.preload["src.link.Protocol"] = function()
   local TradeSession = {}
   function TradeSession:canPick() return true end
@@ -65,8 +63,11 @@ package.preload["src.core.Strings"] = function()
   })
 end
 
+local fontDraws = {}
 package.preload["src.render.Font"] = function()
-  return { draw = function() end }
+  return {
+    draw = function(text) fontDraws[#fontDraws + 1] = tostring(text) end,
+  }
 end
 
 package.preload["src.render.TextBox"] = function()
@@ -219,6 +220,37 @@ visibilityBattle.showPlayerBack = false
 assert(visible(visibilityBattle, { mon = shadowMon }, "player"),
   "badge must appear on a visible player Shadow Pokémon")
 
+-- v1.5 presentation: player-owned Shadow send-out aura and persistent Hyper
+-- indicator must be drawable without depending on the opponent being Shadow.
+local oldLove = _G.love
+_G.love = { graphics = {
+  setColor = function() end,
+  rectangle = function() end,
+} }
+fontDraws = {}
+local hyperVisualMon = {
+  colosseumShadow = {
+    version = 1, isShadow = true, purified = false, hyperMode = true,
+  },
+}
+local visualBattle = {
+  frame = 100, phase = "menu", menuIndex = 1, kind = "trainer",
+  player = { mon = hyperVisualMon }, enemy = { mon = {} },
+  uiSize = function() return 160, 144 end,
+  growInScale = function() return nil end,
+  fxHidden = function() return false end,
+}
+BattleState.drawTextArea(visualBattle)
+local sawShadow, sawHyper, sawAura = false, false, false
+for _, text in ipairs(fontDraws) do
+  if text == "SHADOW" then sawShadow = true end
+  if text == "HYPER" then sawHyper = true end
+  if text == "DARK AURA!" then sawAura = true end
+end
+assert(sawShadow, "player Shadow battle badge missing")
+assert(sawHyper, "Hyper Mode battle indicator missing")
+assert(sawAura, "player Shadow send-out aura missing")
+_G.love = oldLove
 
 assert(registered.events["battle.battler_switched"],
   "battle switch participation handler missing")
@@ -256,11 +288,16 @@ assert(BattleState._colosseumShouldCallV13(fakeBattle),
 
 fakeBattle.kind = "trainer"
 fakeBattle.player.mon = { status = nil }
-assert(BattleState._colosseumShouldCallV13(fakeBattle),
-  "CALL must replace RUN in trainer battles")
-fakeBattle.kind = "wild"
+fakeBattle.enemy = { mon = participatingMon }
 assert(not BattleState._colosseumShouldCallV13(fakeBattle),
-  "ordinary wild battles must preserve RUN for Kanto compatibility")
+  "an enemy Shadow Pokémon must not enable CALL for a normal awake lead")
+fakeBattle.player.mon = participatingMon
+assert(BattleState._colosseumShouldCallV13(fakeBattle),
+  "CALL must replace RUN when the player's active Pokémon is Shadow")
+fakeBattle.kind = "wild"
+fakeBattle.player.mon = { status = nil }
+assert(not BattleState._colosseumShouldCallV13(fakeBattle),
+  "ordinary wild battles must preserve RUN for a normal awake lead")
 fakeBattle.player.mon.status = "SLP"
 assert(BattleState._colosseumShouldCallV13(fakeBattle),
   "CALL must be available to wake a sleeping Pokémon")
