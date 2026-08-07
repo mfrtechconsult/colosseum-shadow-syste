@@ -79,6 +79,25 @@ function installShadowUIRuntime(mod)
           and badgeVisible(self, self.enemy, "enemy") or false
         local playerShadow = badgeVisible
           and badgeVisible(self, self.player, "player") or false
+
+        -- v1.5: every time a player-owned Shadow Pokémon becomes the visible
+        -- battler, replay the same short dark-aura presentation used for the
+        -- enemy reveal. Tracking the battler object rather than the battle
+        -- itself makes switching out and back in replay the cue naturally.
+        local playerMon = self.player and self.player.mon
+        if not (playerMon and hooks.isActiveShadow(playerMon)) then
+          self._colosseumPlayerAuraMonV15 = nil
+          self._colosseumPlayerAuraStartV15 = nil
+        elseif playerShadow and self._colosseumPlayerAuraMonV15 ~= playerMon then
+          self._colosseumPlayerAuraMonV15 = playerMon
+          self._colosseumPlayerAuraStartV15 = self.frame or 0
+        end
+        local playerAuraFrame
+        if playerShadow and self._colosseumPlayerAuraStartV15 ~= nil then
+          local age = (self.frame or 0) - self._colosseumPlayerAuraStartV15
+          if age >= 0 and age < 48 then playerAuraFrame = age end
+        end
+
         if not enemyShadow and not playerShadow then return unpack(results) end
 
         local width = 160
@@ -95,9 +114,16 @@ function installShadowUIRuntime(mod)
         if enemyShadow then badge(width - 57, 0) end
         if playerShadow then badge(0, 86) end
 
-        if enemyShadow and self._colosseumShadowRevealActive then
-          local frame = self.waitFrames or 0
-          local cx, cy = width - 32, 40
+        local playerState = playerMon and hooks.shadow(playerMon)
+        if playerShadow and playerState and playerState.hyperMode then
+          love.graphics.setColor(1, 1, 1, 1)
+          love.graphics.rectangle("fill", 0, 74, 56, 10)
+          love.graphics.setColor(0, 0, 0, 1)
+          love.graphics.rectangle("line", 0, 74, 56, 10)
+          Font.draw("HYPER", 4, 75)
+        end
+
+        local function darkAura(cx, cy, labelX, labelY, frame)
           love.graphics.setColor(0, 0, 0, 1)
           for i = 0, 9 do
             local angle = (i / 10) * math.pi * 2 + frame * 0.18
@@ -111,9 +137,16 @@ function installShadowUIRuntime(mod)
           love.graphics.rectangle("line", cx - 22 - pulse / 2,
             cy - 22 - pulse / 2, 44 + pulse, 44 + pulse)
           love.graphics.setColor(1, 1, 1, 1)
-          love.graphics.rectangle("fill", width - 82, 69, 82, 10)
+          love.graphics.rectangle("fill", labelX, labelY, 82, 10)
           love.graphics.setColor(0, 0, 0, 1)
-          Font.draw("DARK AURA!", width - 80, 70)
+          Font.draw("DARK AURA!", labelX + 2, labelY + 1)
+        end
+
+        if enemyShadow and self._colosseumShadowRevealActive then
+          darkAura(width - 32, 40, width - 82, 69, self.waitFrames or 0)
+        end
+        if playerShadow and playerAuraFrame then
+          darkAura(32, 62, 0, 34, playerAuraFrame)
         end
 
         love.graphics.setColor(1, 1, 1, 1)
@@ -193,6 +226,12 @@ function installShadowUIRuntime(mod)
       love.graphics.rectangle("fill", 8, 64, 56, 9)
       love.graphics.setColor(0, 0, 0, 1)
       Font.draw("SHADOW", 8, 64)
+      if state.hyperMode then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("fill", 72, 64, 48, 9)
+        love.graphics.setColor(0, 0, 0, 1)
+        Font.draw("HYPER", 72, 64)
+      end
       love.graphics.setColor(1, 1, 1, 1)
       return
     end
