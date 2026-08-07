@@ -21,8 +21,8 @@ end
 
 package.preload["src.ui.SummaryMenu"] = function()
   return {
-    update = function() end,
-    draw = function() end,
+    update = function(self) self._vanillaUpdateCalled = true end,
+    draw = function(self) self._vanillaDrawCalled = true end,
   }
 end
 
@@ -167,6 +167,30 @@ local BattleState = require("src.battle.BattleState")
 local SummaryMenu = require("src.ui.SummaryMenu")
 assert(BattleState._colosseumShadowUIInstalledV1, "battle reveal UI missing")
 assert(SummaryMenu._colosseumShadowUIInstalledV1, "summary UI missing")
+assert(SummaryMenu._colosseumPurifiedSummaryV1,
+  "post-purification summary lifecycle missing")
+
+local purifiedSummaryMon = {
+  colosseumShadow = {
+    version = 1, isShadow = false, purified = true, nationalRibbon = true,
+  },
+}
+local purifiedSummary = {
+  mon = purifiedSummaryMon, page = 3,
+  game = {
+    input = { wasPressed = function() return false end },
+    stack = { pop = function() end },
+  },
+}
+SummaryMenu.update(purifiedSummary, 0)
+assert(purifiedSummary.page == 2 and purifiedSummary._vanillaUpdateCalled,
+  "purified Pokémon must immediately return to vanilla two-page navigation")
+SummaryMenu.draw(purifiedSummary)
+assert(purifiedSummary._vanillaDrawCalled,
+  "purified Pokémon must bypass the Shadow renderer")
+assert(purifiedSummaryMon.colosseumShadow
+       and purifiedSummaryMon.colosseumShadow.nationalRibbon,
+  "purification history must remain stored while Shadow UI is hidden")
 
 local shadowMon = {
   colosseumShadow = {
