@@ -82,6 +82,7 @@ function installBattleRuntime(mod)
     battle.colosseumShadowId = encounter.shadowId
     battle.colosseumShadowEncounter = encounter
     battle.colosseumShadowPartySlot = slot
+    battle.colosseumShadowTrainerId = oppClass
 
     local restored
     if encounter.persistSnapshot then
@@ -171,7 +172,7 @@ function installBattleRuntime(mod)
         battle = self,
         mon = mon,
         shadowId = state.shadowId,
-        trainerId = self.opponentClass,
+        trainerId = self.colosseumShadowTrainerId or self.oppClass,
         partySlot = self.colosseumShadowPartySlot
           and (self.colosseumShadowPartySlot - 1) or nil,
       })
