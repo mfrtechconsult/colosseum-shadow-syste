@@ -18,7 +18,7 @@ return function(mod)
     hyperMode = true,
     delayedExperience = true,
     purification = true,
-    genericSnag = false,
+    genericSnag = true,
     doubleBattleAware = false,
   }
   mod.exports.state = shadow
@@ -40,6 +40,10 @@ return function(mod)
   mod.exports.hyperRate = hyperRate
   mod.exports.bankExperience = bankShadowExperience
   mod.exports.purify = purify
+  mod.exports.registerTrainerEncounter = registerShadowTrainerEncounter
+  mod.exports.unregisterTrainerEncounter = unregisterShadowTrainerEncounter
+  mod.exports.trainerEncounter = shadowTrainerEncounter
+  mod.exports.setSnagAccessCheck = setSnagAccessCheck
   mod.exports.setDemoEnabled = function(enabled)
     demoEnabled = enabled ~= false
   end
