@@ -28,6 +28,7 @@ else
   chunk = assert(loadfile("src/part8.lua", "t", env))
 end
 chunk()
+env.installPurifiedSummaryLifecycle()
 
 assert(SummaryMenu._colosseumPurifiedSummaryV1,
   "purified summary lifecycle was not installed")
