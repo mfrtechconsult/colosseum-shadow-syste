@@ -1,4 +1,4 @@
-# Colosseum Shadow System v1.3.0
+# Colosseum Shadow System v1.4.0
 
 A directly playable Pokémon Colosseum-style Shadow Pokémon vertical slice for
 Gen1Recomp. All player-facing mod text is written in English.
@@ -31,7 +31,7 @@ NPCs and map objects are not replaced.
 9. After purification, the Pokémon immediately returns to the ordinary
    two-page summary with no Shadow badge or SHADOW DATA page.
 
-## Colosseum fidelity in v1.3.0
+## Colosseum fidelity
 
 - Exact 25-Nature values for battle participation, Call, party walking,
   Day Care walking, and Scents.
@@ -59,6 +59,16 @@ NPCs and map objects are not replaced.
   Pokémon.
 - Purification retains the National Ribbon/history data while removing all
   Shadow-specific summary behavior.
+
+## Purification ceremony in v1.4.0
+
+- Purification now opens a dedicated full-screen ceremony inspired by
+  Gen1Recomp's evolution movie.
+- The Pokémon sprite pulses while dark rings collapse toward it, then its
+  Shadow state is removed at the visual climax and its normal cry plays.
+- Purified Pokémon are now gated by `isActiveShadow()` at the summary layer
+  itself, so the SHADOW marker and third SHADOW DATA page cannot survive
+  purification merely because the National Ribbon/history record is retained.
 
 ## Deliberate host-game adaptations
 
