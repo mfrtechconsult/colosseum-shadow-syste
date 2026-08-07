@@ -1,7 +1,7 @@
 {
   "id": "colosseum_shadow_system",
   "name": "Colosseum Shadow System",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -14,5 +14,5 @@
   "dependencies": [],
   "optional_dependencies": [],
   "conflicts": [],
-  "description": "A directly playable Shadow Pokémon and Snag Machine demonstration outside Pallet Town."
+  "description": "Reusable Pokémon Colosseum-style Shadow Pokémon core with a directly playable Pallet Town demonstration."
 }
