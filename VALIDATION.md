@@ -13,7 +13,7 @@ Validated on 2026-08-07.
 - Exact 232/256 Hyper critical boundary: PASS
 - Individual 256-step counter: PASS
 - Once-per-Pokémon battle participation: PASS
-- Trainer/wild CALL availability rules: PASS
+- Active-Pokémon CALL availability rules, including enemy-Shadow isolation: PASS
 - Hyper item refusal and Scent exception: PASS
 - Rare Candy, evolution stone, and TM/HM restrictions: PASS
 - Move-reordering restriction: PASS
@@ -21,6 +21,9 @@ Validated on 2026-08-07.
 - Day Care EXP suppression and Hyper recovery: PASS
 - Rare natural Hyper recovery: PASS
 - Shadow battle badge visibility: PASS
+- Player-owned Shadow send-out aura bootstrap: PASS
+- Hyper Mode battle indicator bootstrap: PASS
+- Researcher restriction-test kit grants: PASS
 - Active Shadow third summary page: PASS
 - Purified summary returns to vanilla two-page behavior: PASS
 - Stale page 3 normalization after hot reload: PASS
@@ -37,5 +40,5 @@ purification-ceremony control flow, and package structure.
 
 A complete graphical playthrough still requires the user's current
 Gen1Recomp installation and private ROM-derived cache. No ROM or extracted
-Pokémon assets are included. The purification ceremony's visual timing and
-appearance remain subject to in-game validation.
+Pokémon assets are included. The purification ceremony and battle aura visual
+timing/placement remain subject to in-game validation.
