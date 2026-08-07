@@ -1,13 +1,10 @@
--- Colosseum Shadow System v1.3.0
+-- Colosseum Shadow System v1.7.0-dev
 --
--- Directly playable vertical slice for Gen1Recomp.
+-- Reusable Shadow core plus the original Pallet Town demonstration.
 -- All player-facing content is deliberately written in English.
 --
--- The mod uses the public content/script APIs for data and Pallet Town NPCs.
--- The current Gen1Recomp release does not expose trainer-Pokémon capture or
--- command-menu replacement as public hooks, so those two seams are installed
--- through the declared engine_internals permission, in the same style as the
--- official Nuzlocke mod.
+-- The demo constants below remain defaults for backwards compatibility.
+-- Reusable consumers should pass per-Pokémon configuration to attachShadow().
 
 MOD_ID = "colosseum_shadow_system"
 TRAINER_ID = "OPP_COLOSSEUM_CIPHER_PEON"
@@ -25,9 +22,8 @@ NATURES = {
   "CALM", "GENTLE", "SASSY", "CAREFUL", "QUIRKY",
 }
 
--- Part 9 replaces the compatibility fallbacks below with the verified
--- Colosseum Nature/action and Hyper Mode tables before gameplay begins.
-
+-- Demo defaults. Part 9 replaces the compatibility Heart/Hyper fallbacks with
+-- verified Colosseum Nature/action tables before gameplay begins.
 NORMAL_MOVES = { "THUNDERSHOCK", "TAIL_WHIP", "THUNDER_WAVE" }
 PURIFICATION_MOVE = "QUICK_ATTACK"
 
@@ -87,26 +83,43 @@ function monName(game, mon)
 end
 
 function moveSlot(data, id)
+  if not id then return nil end
   local def = data and data.moves and data.moves[id]
   return { id = id, pp = def and def.pp or 0 }
+end
+
+local function configuredNormalMoves(state)
+  if state and type(state.normalMoves) == "table" and #state.normalMoves > 0 then
+    return state.normalMoves
+  end
+  return NORMAL_MOVES
+end
+
+local function configuredPurifiedMoves(state)
+  if state and type(state.purifiedMoves) == "table" and #state.purifiedMoves > 0 then
+    return state.purifiedMoves
+  end
+  local out = copy(configuredNormalMoves(state))
+  out[#out + 1] = (state and state.purificationMove) or PURIFICATION_MOVE
+  return out
 end
 
 function refreshShadowMoves(mon, data)
   local state = shadow(mon)
   if not state then return end
   if state.purified or not state.isShadow then
-    mon.moves = {
-      moveSlot(data, NORMAL_MOVES[1]),
-      moveSlot(data, NORMAL_MOVES[2]),
-      moveSlot(data, NORMAL_MOVES[3]),
-      moveSlot(data, PURIFICATION_MOVE),
-    }
+    local moves = {}
+    for _, id in ipairs(configuredPurifiedMoves(state)) do
+      if id then moves[#moves + 1] = moveSlot(data, id) end
+    end
+    mon.moves = moves
     return
   end
 
-  local moves = { moveSlot(data, SHADOW_MOVE) }
-  for i = 1, unlockedNormalMoves(state) do
-    moves[#moves + 1] = moveSlot(data, NORMAL_MOVES[i])
+  local moves = { moveSlot(data, state.shadowMove or SHADOW_MOVE) }
+  local normalMoves = configuredNormalMoves(state)
+  for i = 1, math.min(unlockedNormalMoves(state), #normalMoves) do
+    moves[#moves + 1] = moveSlot(data, normalMoves[i])
   end
   mon.moves = moves
 end
@@ -119,25 +132,59 @@ function personalityFrom(mon)
         + (dvs.special or 0)) % 2147483647
 end
 
-function attachShadow(mon, data)
-  if shadow(mon) then
-    refreshShadowMoves(mon, data)
-    return shadow(mon)
+function configureShadow(state, config)
+  if not state or type(config) ~= "table" then return state end
+  if config.shadowId ~= nil then state.shadowId = config.shadowId end
+  if config.shadowMove ~= nil then state.shadowMove = config.shadowMove end
+  if config.normalMoves ~= nil then state.normalMoves = copy(config.normalMoves) end
+  if config.purifiedMoves ~= nil then state.purifiedMoves = copy(config.purifiedMoves) end
+  if config.purificationMove ~= nil then state.purificationMove = config.purificationMove end
+  if config.nature ~= nil then state.nature = config.nature end
+  if config.heartMax ~= nil then
+    local nextMax = math.max(1, math.floor(config.heartMax))
+    local oldMax = math.max(1, math.floor(state.heartMax or HEART_MAX))
+    local oldHeart = math.max(0, math.floor(state.heart or oldMax))
+    state.heartMax = nextMax
+    if config.preserveHeartFraction == true then
+      state.heart = math.max(0, math.min(nextMax,
+        math.floor((oldHeart / oldMax) * nextMax + 0.5)))
+    elseif config.resetHeart == true then
+      state.heart = nextMax
+    else
+      state.heart = math.max(0, math.min(nextMax, oldHeart))
+    end
   end
+  return state
+end
+
+function attachShadow(mon, data, config)
+  local existing = shadow(mon)
+  if existing then
+    configureShadow(existing, config)
+    refreshShadowMoves(mon, data)
+    return existing
+  end
+
+  config = config or {}
   local personality = personalityFrom(mon)
+  local heartMax = math.max(1, math.floor(config.heartMax or HEART_MAX))
   local state = {
     version = 1,
-    shadowId = SHADOW_ID,
+    shadowId = config.shadowId or SHADOW_ID,
     isShadow = true,
     purified = false,
     hyperMode = false,
     personality = personality,
-    nature = NATURES[(personality % #NATURES) + 1],
-    heart = HEART_MAX,
-    heartMax = HEART_MAX,
+    nature = config.nature or NATURES[(personality % #NATURES) + 1],
+    heart = heartMax,
+    heartMax = heartMax,
     stepCounter = 0,
     expBank = 0,
     nationalRibbon = false,
+    shadowMove = config.shadowMove or SHADOW_MOVE,
+    normalMoves = copy(config.normalMoves or NORMAL_MOVES),
+    purificationMove = config.purificationMove or PURIFICATION_MOVE,
+    purifiedMoves = config.purifiedMoves and copy(config.purifiedMoves) or nil,
   }
   mon.colosseumShadow = state
   refreshShadowMoves(mon, data)
@@ -149,7 +196,7 @@ function reduceHeart(mon, data, baseAmount, action)
   if not state or not state.isShadow then return nil end
   local amount = math.max(1, math.floor(baseAmount or 1))
   local before = section(state)
-  state.heart = math.max(0, (state.heart or HEART_MAX) - amount)
+  state.heart = math.max(0, (state.heart or state.heartMax or HEART_MAX) - amount)
   local after = section(state)
   state.lastHeartAction = action
   refreshShadowMoves(mon, data)
