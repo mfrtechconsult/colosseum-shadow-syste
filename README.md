@@ -9,7 +9,9 @@ A reusable Pokémon Colosseum-style Shadow Pokémon system for Gen1Recomp, with 
 - Existing v1.6 saves remain compatible; the Pikachu demo values are still the defaults.
 - The core is exposed through Gen1Recomp's supported inter-mod `mod.exports` API.
 - A total conversion can disable the Pallet demo/test-kit behavior with `setDemoEnabled(false)` while keeping Heart Gauge, Hyper Mode, delayed EXP, restrictions and purification active.
-- Generic Snag encounters and double-battle integration are intentionally reported as capabilities still in development rather than being silently emulated by the Pikachu demo path.
+- Trainer Shadow encounters are registered dynamically by trainer ID + zero-based party slot; successful Snags emit `shadow.snagged`.
+- The consuming campaign can provide the Snag Machine availability check instead of storing that story flag inside this mod.
+- Double-battle integration remains an explicit capability still in development; it is not silently emulated by the single-battle demo path.
 
 ## EXP ownership
 
