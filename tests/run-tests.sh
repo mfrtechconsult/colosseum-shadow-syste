@@ -8,8 +8,10 @@ texlua tests/check_syntax.lua tests/test_registration.lua
 texlua tests/check_syntax.lua tests/test_purified_summary.lua
 texlua tests/check_syntax.lua tests/test_fidelity.lua
 texlua tests/check_syntax.lua tests/test_purification_animation.lua
+texlua tests/check_syntax.lua tests/test_exp_bank.lua
 texlua tests/test_shadow_math.lua
 texlua tests/test_registration.lua
 texlua tests/test_purified_summary.lua
 texlua tests/test_fidelity.lua
 texlua tests/test_purification_animation.lua
+texlua tests/test_exp_bank.lua
