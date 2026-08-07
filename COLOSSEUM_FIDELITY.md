@@ -36,9 +36,10 @@
 - **Battle format:** Colosseum is predominantly double battle. Gen1Recomp is a
   single-battle engine, so disobedience outcomes that target the player's
   partner or a trainer are represented as a lost turn and matching text.
-- **Run/Call compatibility:** all Trainer battles use CALL. Normal Kanto wild
-  encounters retain RUN unless the active Pokémon is Shadow or asleep; this
-  prevents the mod from making ordinary Kanto exploration inescapable.
+- **Run/Call compatibility:** CALL is exposed only when the player's active
+  Pokémon is Shadow or asleep. The opponent being Shadow does not enable it.
+  Otherwise the host game's RUN command remains visible; trainer battles still
+  reject escape through the ordinary Gen1Recomp rule.
 - **Demo purification:** the Relic Keeper NPC represents the Relic Stone flow.
 - **Demo target:** Pikachu is a custom test target and uses a 5000-point full
   gauge. Original Colosseum species had species-specific full-gauge values.
