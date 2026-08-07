@@ -4,6 +4,7 @@ return function(mod)
   registerPalletScripts(mod)
   installBattleRuntime(mod)
   installShadowUIRuntime(mod)
+  installPurifiedSummaryLifecycle()
 
   mod.hooks:wrap("battle.crit", function(next, ctx)
     local mon = ctx and ctx.attacker and ctx.attacker.mon
