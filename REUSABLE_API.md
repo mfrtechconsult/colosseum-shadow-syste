@@ -53,6 +53,48 @@ local state = Shadow.attachForGame(game, mon, {
 
 `normalMoves` are the moves progressively restored while the Heart Gauge opens. `purifiedMoves` is the final four-move set after purification. The older single `purificationMove` option is retained for the bundled Pikachu demo and compatibility.
 
+## Registering a trainer Shadow encounter
+
+Trainer encounters use zero-based party slots, matching the canonical Colosseum mapping data:
+
+```lua
+Shadow.registerTrainerEncounter("OPP_TRUDLY", {
+  partySlot = 2,
+  shadowId = "shadow_makuhita",
+  heartMax = 3000,
+  shadowMove = "SHADOW_RUSH",
+  normalMoves = {
+    "FOCUS_ENERGY",
+    "VITAL_THROW",
+    "CROSS_CHOP",
+  },
+  purifiedMoves = {
+    "FORESIGHT",
+    "FOCUS_ENERGY",
+    "VITAL_THROW",
+    "CROSS_CHOP",
+  },
+})
+```
+
+The core attaches Shadow state to that trainer-party member when Gen1Recomp creates the trainer battle. The old Pallet Pikachu demo is registered through this same mechanism.
+
+A campaign can keep ownership of the Snag Machine story flag by providing a callback:
+
+```lua
+Shadow.setSnagAccessCheck(function(battle)
+  return battle.game.save.flags.hasSnagMachine == true
+end)
+```
+
+When a Shadow Pokémon is successfully caught, the core emits:
+
+```text
+shadow.snagged
+```
+
+with the battle, Pokémon, Shadow ID, trainer ID and zero-based party slot.
+
 ## Exported functions
 
 - `state(mon)` — returns the retained Shadow state or `nil`.
@@ -68,6 +110,10 @@ local state = Shadow.attachForGame(game, mon, {
 - `hyperRate(state)` — current Hyper Mode entry probability.
 - `bankExperience(battle, mon, split)` — store the exact Gen1Recomp EXP share when eligible.
 - `purify(game, mon)` — apply banked EXP, final moves and National Ribbon, then close Shadow state.
+- `registerTrainerEncounter(trainerId, config)` — configure a Shadow trainer/slot dynamically.
+- `unregisterTrainerEncounter(trainerId)` — remove a dynamic trainer encounter.
+- `trainerEncounter(trainerId)` — inspect current encounter configuration.
+- `setSnagAccessCheck(fn)` — let the consuming campaign decide whether its Snag Machine is active.
 - `setDemoEnabled(enabled)` — enable/disable only the bundled Pallet demo behavior.
 
 ## EXP contract
@@ -89,9 +135,11 @@ A consuming total conversion is responsible only for registering the species' or
   hyperMode = true,
   delayedExperience = true,
   purification = true,
-  genericSnag = false,
+  genericSnag = true,
   doubleBattleAware = false,
 }
 ```
 
-The `false` flags are deliberate. The existing Snag seam is still tied to the bundled demonstration trainer, and the current battle runtime is Gen1Recomp single-battle oriented. Those capabilities should be implemented here first, then consumed by the Colosseum total conversion.
+`genericSnag = true` means trainer/party-slot Snag encounters are no longer tied to the Pallet demo.
+
+`doubleBattleAware = false` remains deliberate. Gen1Recomp's current battle runtime is still single-active-battler oriented, so target selection, capture-and-continue behavior and multi-battler Heart/Hyper handling must be implemented and tested before the Colosseum total conversion can claim its critical 2v2 gate.
