@@ -1,4 +1,6 @@
 return function(mod)
+  local demoEnabled = true
+
   registerContent(mod)
   registerCommands(mod)
   registerPalletScripts(mod)
@@ -6,11 +8,48 @@ return function(mod)
   installShadowUIRuntime(mod)
   installPurifiedSummaryLifecycle()
 
+  -- Stable inter-mod surface. Total conversions should consume Shadow behavior
+  -- through mod.find("colosseum_shadow_system").exports instead of requiring
+  -- this mod's private implementation files.
+  mod.exports.apiVersion = 1
+  mod.exports.capabilities = {
+    configurableShadowState = true,
+    heartGauge = true,
+    hyperMode = true,
+    delayedExperience = true,
+    purification = true,
+    genericSnag = false,
+    doubleBattleAware = false,
+  }
+  mod.exports.state = shadow
+  mod.exports.isActive = isActiveShadow
+  mod.exports.section = section
+  mod.exports.gauge = gauge
+  mod.exports.expBankingEnabled = expBankingEnabled
+  mod.exports.refreshMoves = refreshShadowMoves
+  mod.exports.configure = configureShadow
+  mod.exports.attach = function(mon, data, config)
+    return attachShadow(mon, data, config)
+  end
+  mod.exports.attachForGame = function(game, mon, config)
+    assert(game and game.data, "attachForGame requires a live game")
+    return attachShadow(mon, game.data, config)
+  end
+  mod.exports.reduceHeart = reduceHeart
+  mod.exports.heartActionAmount = heartActionAmount
+  mod.exports.hyperRate = hyperRate
+  mod.exports.bankExperience = bankShadowExperience
+  mod.exports.purify = purify
+  mod.exports.setDemoEnabled = function(enabled)
+    demoEnabled = enabled ~= false
+  end
+  mod.exports.isDemoEnabled = function() return demoEnabled end
+
   mod.hooks:wrap("battle.crit", function(next, ctx)
     local mon = ctx and ctx.attacker and ctx.attacker.mon
     local state = shadow(mon)
     local moveId = ctx and ctx.moveId
-    if moveId == SHADOW_MOVE and state and state.hyperMode then
+    if state and moveId == (state.shadowMove or SHADOW_MOVE) and state.hyperMode then
       local rng = ctx.rng or math.random
       -- 232/256 is Colosseum's exact 90.625% Hyper Mode critical rate.
       -- Bypass Gen 1's Speed-based critical formula for this move.
@@ -90,10 +129,11 @@ return function(mod)
 
   mod.events:on("pokemon.caught", function(ev)
     local state = shadow(ev.mon)
-    if state and state.shadowId == SHADOW_ID then
+    if not state then return end
+    refreshShadowMoves(ev.mon, ev.game.data)
+    if demoEnabled and state.shadowId == SHADOW_ID then
       mod.save:set("encounter_status", "snagged")
       mod.save:set("encounter_snapshot", false)
-      refreshShadowMoves(ev.mon, ev.game.data)
     end
   end)
 
@@ -144,6 +184,8 @@ return function(mod)
   mod.events:on("game.ready", function(ev)
     installBattleRuntime(mod)
     refreshPartyShadowMoves(ev.game)
+    if not demoEnabled then return end
+
     -- Existing saves that installed v1.5 after already talking to the
     -- Researcher never re-ran setupPlayer, so they never received the test
     -- items. Grant the v1.6 kit once on load as well as on Researcher talk.
