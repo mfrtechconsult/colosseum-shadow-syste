@@ -80,23 +80,7 @@ function installShadowUIRuntime(mod)
         local playerShadow = badgeVisible
           and badgeVisible(self, self.player, "player") or false
 
-        -- v1.5: every time a player-owned Shadow Pokémon becomes the visible
-        -- battler, replay the same short dark-aura presentation used for the
-        -- enemy reveal. Tracking the battler object rather than the battle
-        -- itself makes switching out and back in replay the cue naturally.
         local playerMon = self.player and self.player.mon
-        if not (playerMon and hooks.isActiveShadow(playerMon)) then
-          self._colosseumPlayerAuraMonV15 = nil
-          self._colosseumPlayerAuraStartV15 = nil
-        elseif playerShadow and self._colosseumPlayerAuraMonV15 ~= playerMon then
-          self._colosseumPlayerAuraMonV15 = playerMon
-          self._colosseumPlayerAuraStartV15 = self.frame or 0
-        end
-        local playerAuraFrame
-        if playerShadow and self._colosseumPlayerAuraStartV15 ~= nil then
-          local age = (self.frame or 0) - self._colosseumPlayerAuraStartV15
-          if age >= 0 and age < 48 then playerAuraFrame = age end
-        end
 
         if not enemyShadow and not playerShadow then return unpack(results) end
 
@@ -144,9 +128,6 @@ function installShadowUIRuntime(mod)
 
         if enemyShadow and self._colosseumShadowRevealActive then
           darkAura(width - 32, 40, width - 82, 69, self.waitFrames or 0)
-        end
-        if playerShadow and playerAuraFrame then
-          darkAura(32, 62, 0, 34, playerAuraFrame)
         end
 
         love.graphics.setColor(1, 1, 1, 1)
@@ -243,7 +224,7 @@ function installShadowUIRuntime(mod)
       and (state.nature or "UNKNOWN") or "????"
     local mode = state.hyperMode and "HYPER MODE" or "NORMAL"
     local expState = hooks.natureVisible(state)
-      and (((state.expBank or 0) > 0) and "STORING" or "READY") or "LOCKED"
+      and tostring(math.max(0, math.floor(state.expBank or 0))) or "LOCKED"
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", 0, 0, 160, 144)
@@ -267,8 +248,8 @@ function installShadowUIRuntime(mod)
     Font.draw(nature, 80, 88)
     Font.draw("MODE/", 8, 104)
     Font.draw(mode, 80, 104)
-    Font.draw("EXP/", 8, 120)
-    Font.draw(expState, 80, 120)
+    Font.draw("EXP BANK/", 8, 120)
+    Font.draw(expState, 88, 120)
 
     if (state.heart or 0) == 0 then
       love.graphics.setColor(1, 1, 1, 1)
