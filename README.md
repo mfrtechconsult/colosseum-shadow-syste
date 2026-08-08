@@ -1,18 +1,33 @@
-# Colosseum Shadow System v1.6.0
+# Colosseum Shadow System v1.7.0
 
-A directly playable Pokémon Colosseum-style Shadow Pokémon vertical slice for Gen1Recomp.
+A reusable Pokémon Colosseum-style Shadow Pokémon system for Gen1Recomp, with the original Pallet Town vertical slice retained as a playable demonstration.
 
-## v1.6 reliability fixes
+## v1.7 reusable core
 
-- `CALL` is now strictly tied to the player's active Shadow Pokémon. An enemy Shadow Pokémon never enables it, and the slot is explicitly repainted as `RUN` otherwise.
-- The player-side dark aura is triggered at the actual Pokémon grow-in and rendered through Gen1Recomp's post-sprite `battle.overlay` hook.
-- Eligible battle EXP is calculated from Gen1Recomp's EXP formula and stored in `expBank` without changing the Shadow Pokémon's level before purification.
-- The `SHADOW DATA` page now displays the exact `EXP BANK` amount, or `LOCKED` before the Colosseum threshold is reached.
-- Existing saves receive the restriction-test kit once at game load; the Researcher also restores Potion, Rare Candy, Thunder Stone, and TM24.
-- Hyper Mode remains visibly marked in battle and on the summary screen.
+- Shadow state can now be configured per Pokémon instead of being hard-coded to the demo Pikachu.
+- `shadowId`, Heart Gauge maximum, Shadow move, unlockable normal moves and post-purification moves can be supplied by another mod.
+- Existing v1.6 saves remain compatible; the Pikachu demo values are still the defaults.
+- The core is exposed through Gen1Recomp's supported inter-mod `mod.exports` API.
+- A total conversion can disable the Pallet demo/test-kit behavior with `setDemoEnabled(false)` while keeping Heart Gauge, Hyper Mode, delayed EXP, restrictions and purification active.
+- Trainer Shadow encounters are registered dynamically by trainer ID + zero-based party slot; successful Snags emit `shadow.snagged`.
+- The consuming campaign can provide the Snag Machine availability check instead of storing that story flag inside this mod.
+- Double-battle integration remains an explicit capability still in development; it is not silently emulated by the single-battle demo path.
+
+## EXP ownership
+
+The Shadow system remains the single owner of delayed Shadow EXP:
+
+- `battle.exp_award` intercepts the normal Gen1Recomp share;
+- the exact Gen1Recomp EXP formula is used without mutating the Shadow Pokémon;
+- eligible EXP is stored in `state.expBank` only after the appropriate Heart Gauge threshold;
+- purification applies the bank, recalculates level/stats and clears the bank.
+
+Consumers such as the Pokémon Colosseum total conversion must **not** implement a second EXP-bank system. They only define the species' ordinary growth curve; this mod owns Shadow-specific EXP behavior.
 
 ## Core lifecycle
 
-Snag the demo Shadow Pikachu from the Cipher Peon, open its five-section Heart Gauge through battle participation, walking, Call, Day Care or Scents, then purify it at the Relic Keeper. Before purification, evolution, Rare Candy, evolution stones, TM/HM teaching, move reordering, nickname and link trade are blocked. Eligible EXP is banked and applied only during purification. Purification removes all Shadow summary behavior while retaining the National Ribbon/history data.
+Snag a Shadow Pokémon, open its five-section Heart Gauge through battle participation, walking, Call, Day Care or Scents, then purify it. Before purification, evolution, Rare Candy, evolution stones, TM/HM teaching, move reordering, nickname and link trade are blocked. Eligible EXP is banked and applied only during purification. Purification removes active Shadow summary behavior while retaining the National Ribbon/history data.
 
-See `INSTALL.md` for the focused v1.6 validation procedure and `COLOSSEUM_FIDELITY.md` for adaptations made for Gen1Recomp's single-battle engine.
+The bundled Pallet Town demo still uses Shadow Pikachu to exercise the complete lifecycle.
+
+See `REUSABLE_API.md` for the inter-mod contract, `INSTALL.md` for the focused demo validation procedure and `COLOSSEUM_FIDELITY.md` for the current Gen1Recomp adaptations.
